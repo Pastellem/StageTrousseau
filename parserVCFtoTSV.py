@@ -49,6 +49,13 @@ Colname= ['CHROM','START','ID','END','REF','ALT','QUAL','FILTRE','AC','AF','AN',
 'gnomAD_exome_EAS','gnomAD_exome_FIN','gnomAD_exome_NFE','gnomAD_exome_OTH',
 'gnomAD_exome_SAS', 'dbscSNV_ADA_SCORE','dbscSNV_RF_SCORE','FILTER','CNV','GT_AD_DP_GQ_PL']
 
+transition = {"A":"G","G":"A","C":"T","T":"C"}
+transversion = {"A":"C","A":"T","C":"A","T":"A","G":"C","G":"T","C":"G","T":"G"}
+with open("ExonHg19.txt","r") as f:
+	EXON=f.readlines()
+with open("gcbaseHG19.txt","r") as f:
+	GC=f.readlines()
+
 def ouputCSV(fileCSV,individu):
 	output = individu+'.csv'
 	with open(output,"w") as o:
@@ -86,6 +93,47 @@ def mariaDB(File,table,Colname):
 		print "Alteration de la table done"
 		os.system(command_INSERT)
 
+def Exon(start,end):
+	for line in EXON:
+		line = split("\s",line)
+		if start != ".":
+			if int(line[1])-5>= int(start) >=int(line[1])+5:
+				return 1
+			elif int(line[2])-5>= int(start) >=int(line[2])+5:
+				return 1
+		elif end != "-":
+			if int(line[1])-5>= int(end) >=int(line[1])+5:
+				return 1
+			if int(line[2])-5>= int(end) >=int(line[2])+5:
+				return 1
+	return "None"
+def GC_region(start,end):
+	for line in GC:
+		line = split("\s",line)
+		if start != ".":
+			if int(line[2])>= int(start) >=int(line[3]):
+				return 1
+		elif end != "-":
+			if int(line[2])>= int(end) >=int(line[3]):
+				return 1
+	return "None"
+	
+def Mutation(REF,ALT):
+	if REF.upper() in transition.keys() and ALT.upper() == transition[REF.upper()]:
+		return "Transition"
+	elif REF.upper() in transversion.keys() and ALT.upper() == transversion[REF.upper()]:
+		return "Transversion"
+	elif ALT.upper() in transversion.keys() and REF.upper() == transversion[ALT.upper()]:
+		return "Transversion"
+	elif ALT.upper() in transition.keys() and REF.upper() == transition[ALT.upper()]:
+		return "Transition"
+	elif len(REF)>len(ALT) or search("\*",ALT) or ALT=="<DEL>":
+		return "Deletion"
+	elif ALT=="<INS>":
+		return "Insertion"
+def Residu(REF):
+	pass
+	
 def readFile(FilePath):
 	""" Read file line by line and transfert to other function """
 	print("Read file..........Work in progress")
@@ -101,8 +149,9 @@ def readFile(FilePath):
 				line=line.replace(";", "\t") #remove ";"
 				line=line.replace(":","_") #remove : from annotation:annotated
 				extract = split("\s",line) #Create list from line
-				tsvLine=len(Colname)*["NA"]
+				tsvLine=len(Colname)*["None"]
 				j=0
+				
 				for i in range(8): #Complet de 7st first default columns 
 					if i==3:
 						tsvLine[i]="-";
@@ -110,8 +159,10 @@ def readFile(FilePath):
 					else: 
 						tsvLine[i]=extract[j]
 					j+=1
-				
-				for annotation in extract[6:-2]: # Loop in line to find Annotation
+				tsvLine[Colname.index("ExtExon")]=Exon(tsvLine[1],tsvLine[3])
+				tsvLine[Colname.index("GC")]=Exon(tsvLine[2],tsvLine[3])
+				tsvLine[Colname.index("Mutation")]=Mutation(tsvLine[4],tsvLine[5])
+				for annotation in extract: # Loop in line to find Annotation
 					#If Annotation have "=" add to data. Skip ANNOVAR date
 					if search("=",annotation) and not search("ANNOVAR",annotation):
 						info = split("=",annotation) #split ;annotation=value;
@@ -131,21 +182,15 @@ def readFile(FilePath):
 						elif str(info[0])[0:-5] in Colname: # pour les annot _hg19/38
 							tsvLine[Colname.index(str(info[0])[0:-5])]=info[1]
 						if info[0] == "END":
-							print(info[0])
 							tsvLine[Colname.index("END")]=info[1]
 							tsvLine[Colname.index("CNV")]="oui"
 						if info[0] == "Type":
 							NGS = split("-",info[1])
-							if NGS[0]=="WGS" and NGS[1]=="WES":#Tag the WGS and WES statue
+							if NGS[0]=="WGS":#Tag the WGS and WES statue
 								tsvLine[Colname.index("WGS")]=1
+							if NGS[1]=="WES":
 								tsvLine[Colname.index("WES")]=1
-							else:
-								if NGS[1]=="WES":
-									tsvLine[Colname.index("WES")]=1
-									tsvLine[Colname.index("WGS")]=0
-								else:
-									tsvLine[Colname.index("WES")]=0
-									tsvLine[Colname.index("WGS")]=1
+							
 					else:
 						if annotation == "DS": #downsampled special annotation in ANNOVAR
 							tsvLine[Colname.index("downsampled")]=1
@@ -153,7 +198,7 @@ def readFile(FilePath):
 							tsvLine[Colname.index("dbSNP")]=1
 				tsv = tsv +"\t".join(map(str,tsvLine))
 				tsv+= "\n"
-		tsv=tsv.replace("\t.","\tNA") #Tranform each . on Not Available
+		tsv=tsv.replace("\t.","\tNone") #Tranform each . on Not Available
 		
 		#tsv=tsv.replace("\t", ";") #Line for biologist csv 
 	return tsv
