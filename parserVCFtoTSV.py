@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 # coding: utf8
 
 import sys
@@ -60,42 +60,44 @@ def ouputCSV(fileCSV,individu):
 	return output
 	
 def mariaDB(File,table,Colname):
-	purge="mysql -D pastelle -u pastelle --password=7SOlubl3ZH1sMlsN -e 'DROP TABLE IF EXISTS {};'".format(table)
+	purge="mysql -D pastelle -u pastelle --password=13 -e 'DROP TABLE IF EXISTS {};'".format(table)
 	os.system(purge)
 	colname_SQL=''
 	for i in Colname:
 		if i == Colname[-1]:
-			colname_SQL=colname_SQL+"`{}` VARCHAR(512) NULL".format(i)
+			colname_SQL=colname_SQL+"`{}` TEXT NULL".format(i)
 		elif match("AA",i):
 			colname_SQL=colname_SQL+"`{}` TEXT(1000) NULL,".format(i)
 		else:
-			colname_SQL=colname_SQL+"`{}` VARCHAR(512) NULL,".format(i)
-	command_CREATE = "mysql -D pastelle -u pastelle --password=7SOlubl3ZH1sMlsN -e 'CREATE TABLE IF NOT EXISTS {}({});'".format(table,colname_SQL)
+			colname_SQL=colname_SQL+"`{}` TEXT NULL,".format(i)
+	command_CREATE = "mysql -D pastelle -u pastelle --password=13 -e 'CREATE TABLE IF NOT EXISTS {}({});'".format(table,colname_SQL)
 	os.system(command_CREATE)
 	
-	command_COUNT="mysql -D pastelle -u pastelle --password=7SOlubl3ZH1sMlsN -e 'SELECT COUNT(*) FROM {};'".format(table)
+	command_COUNT="mysql -D pastelle -u pastelle --password=13 -e 'SELECT COUNT(*) FROM {};'".format(table)
 	resultat_Count = os.popen(command_COUNT).read()
 	resultat_Count = resultat_Count.rstrip("\n\r")
 	count=split("\n",resultat_Count)
 	if count.pop()!='0':
 		Mariadb_UPDATE(File,table,colname)
 	else:
-		command_ALTER = "mysql -D pastelle -u pastelle --password=7SOlubl3ZH1sMlsN -e 'ALTER TABLE {} ADD COLUMN  IDs VARCHAR(512) UNIQUE FIRST;'".format(table)
-		command_INSERT="mysql -D pastelle -u pastelle --password=7SOlubl3ZH1sMlsN -e 'UPDATE {} SET IDs=(SELECT SHA2(CONCAT(CHROM,\"_\",START,\"_\",END,\"_\",REF,\"_\",ALT),512));'".format(table)
-		command_LOAD = "mysql -D pastelle -u pastelle --password=7SOlubl3ZH1sMlsN --local-infile=1 -e 'LOAD DATA LOCAL INFILE \"{}\" INTO TABLE {} FIELDS TERMINATED BY \"\t\" LINES TERMINATED BY \"\n\" IGNORE 1 ROWS;'".format(File,table)
+		command_ALTER = "mysql -D pastelle -u pastelle --password=13 -e 'ALTER TABLE {} ADD COLUMN  IDs VARCHAR(512) UNIQUE FIRST;'".format(table)
+		command_INSERT="mysql -D pastelle -u pastelle --password=13 -e 'UPDATE {} SET IDs=(SELECT SHA2(CONCAT(CHROM,\"_\",START,\"_\",END,\"_\",REF,\"_\",ALT),512));'".format(table)
+		command_LOAD = "mysql -D pastelle -u pastelle --password=13 --local-infile=1 -e 'LOAD DATA LOCAL INFILE \"{}\" INTO TABLE {} FIELDS TERMINATED BY \"\t\" LINES TERMINATED BY \"\n\" IGNORE 1 ROWS;'".format(File,table)
 		os.system(command_LOAD)
-		print "Chargement fichier done"
+		print("Chargement fichier done")
 		os.system(command_ALTER)
-		print "Alteration de la table done"
+		print("Alteration de la table done")
 		os.system(command_INSERT)
-	mutation = ["mysql -D pastelle -u pastelle --password=7SOlubl3ZH1sMlsN -e 'update {} set `Ti-Tv`=1 where (REF=\"A\" OR REF=\"G\") AND (ALT=\"A\" OR ALT=\"G\");'",
-	"mysql -D pastelle -u pastelle --password=7SOlubl3ZH1sMlsN -e 'update {} set `Ti-Tv`=1 where (REF=\"C\" OR REF=\"T\") AND (ALT=\"C\" OR  ALT=\"T\");'",
-	"mysql -D pastelle -u pastelle --password=7SOlubl3ZH1sMlsN -e 'update {} set `Ti-Tv`=2 where REF=\"A\" AND (ALT=\"C\" OR  ALT=\"T\");'",
-	"mysql -D pastelle -u pastelle --password=7SOlubl3ZH1sMlsN -e 'update {} set `Ti-Tv`=2 where REF=\"G\" AND (ALT=\"C\" OR ALT=\"T\");'",
-	"mysql -D pastelle -u pastelle --password=7SOlubl3ZH1sMlsN -e 'update {} set `Ti-Tv`=2 where REF=\"C\" AND (ALT=\"A\" OR ALT=\"G\");'",
-	"mysql -D pastelle -u pastelle --password=7SOlubl3ZH1sMlsN -e 'update {} set `Ti-Tv`=2 where REF=\"T\" AND (ALT=\"A\" OR ALT=\"G\");'"]
-	for i in mutation:
-		os.system(i.format(table))
+		print("Cryptaage Id unique done")
+	mutation = ["mysql -D pastelle -u pastelle --password=13 -e 'update {} set `Ti-Tv`=1 where (REF=\"A\" OR REF=\"G\") AND (ALT=\"A\" OR ALT=\"G\");'",
+	"mysql -D pastelle -u pastelle --password=13 -e 'update {} set `Ti-Tv`=1 where (REF=\"C\" OR REF=\"T\") AND (ALT=\"C\" OR  ALT=\"T\");'",
+	"mysql -D pastelle -u pastelle --password=13 -e 'update {} set `Ti-Tv`=2 where REF=\"A\" AND (ALT=\"C\" OR  ALT=\"T\");'",
+	"mysql -D pastelle -u pastelle --password=13 -e 'update {} set `Ti-Tv`=2 where REF=\"G\" AND (ALT=\"C\" OR ALT=\"T\");'",
+	"mysql -D pastelle -u pastelle --password=13 -e 'update {} set `Ti-Tv`=2 where REF=\"C\" AND (ALT=\"A\" OR ALT=\"G\");'",
+	"mysql -D pastelle -u pastelle --password=13 -e 'update {} set `Ti-Tv`=2 where REF=\"T\" AND (ALT=\"A\" OR ALT=\"G\");'"]
+	#for i in mutation:
+		#os.system(i.format(table))
+		#update {} set `Ti-Tv`=2 where select * from CRO6502 INNER JOIN GC ON CRO6502.START>=GC.chromStart or CRO6502.END<=GC.chromEnd or CRO6502.END>=GC.chromStart or CRO6502.END<=GC.chromEnd);
 	
 
 def readFile(FilePath):
@@ -135,10 +137,8 @@ def readFile(FilePath):
 								tsvLine[Colname.index(info[0])]=round(float(info[1]),6)
 								
 							elif match("AC",info[0]):#Change AC annotation
-								if info[1]==2:
-									tsvLine[Colname.index(info[0])]="Hom"
-								else:
-									tsvLine[Colname.index(info[0])]="Het"
+								tsvLine[Colname.index(info[0])]=info[1].replace("2","Hom")
+								tsvLine[Colname.index(info[0])]=info[1].replace("1","Het")
 							else:
 								tsvLine[Colname.index(info[0])]=info[1] #add the 	value
 			
@@ -149,9 +149,12 @@ def readFile(FilePath):
 							tsvLine[Colname.index("CNV")]="oui"
 						if info[0] == "Type":						
 							NGS = split("-",info[1])	
-							if NGS[0] == "WGS":#Tag the WGS and WES statue
+							if NGS[0] == "WGS" and NGS[1]=="WES":#Tag the WGS and WES statue
 								tsvLine[Colname.index("WGS")]=1
-							if NGS[1]=="WES":
+								tsvLine[Colname.index("WES")]=1
+							elif NGS[0] == "WGS" :
+								tsvLine[Colname.index("WGS")]=1
+							else:
 								tsvLine[Colname.index("WES")]=1
 								
 					else:
@@ -167,9 +170,9 @@ def readFile(FilePath):
 	return tsv
 
 def extractor(table):
-	selection = "mysql -D pastelle -u pastelle --password=7SOlubl3ZH1sMlsN -e 'SELECT * FROM {0} limit 300' > selection_{0}.txt".format(table)
+	selection = "mysql -D pastelle -u pastelle --password=13 -e 'SELECT * FROM {0} ' > selection_{0}.txt".format(table)
 	os.system(selection)
-	#"mysql -D pastelle -u pastelle --password=7SOlubl3ZH1sMlsN -e 'SELECT `CHROM`,`START`,`END`,`ID`,`REF`,`ALT`,`FILTRE`,`AC`,`AF`,`AN`,`DP`,`Func.refGene_20170601`,`Gene.refGene_20170601`,`GeneDetail.refGene_20170601`,`ExonicFunc.refGene_20170601`,`AAChange.refGene_20170601`,`1000g2015all`,`1000g2015afr`,`1000g2015amr`,`1000g2015eur`,`1000g2015eas`,`1000g2015sas`,`ExcessHet`,`dbSNP`,`downsampled`,`ExAC_ALL`,`ExAC_AFR`,`ExAC_AMR`,`ExAC_EAS`,`ExAC_FIN`,`ExAC_NFE`,`ExAC_OTH`,`ExAC_SAS`,`ExAC_nontcga_ALL`,`ExAC_nontcga_AFR`,`ExAC_nontcga_AMR`,`ExAC_nontcga_EAS`,`ExAC_nontcga_FIN`,`ExAC_nontcga_NFE`,`ExAC_nontcga_OTH`,`ExAC_nontcga_SAS`,`WGS`,`WES`,`CNV` FROM CRO6502_HG19 limit 300' > selection_CRO6502_HG19.txt"
+	#"mysql -D pastelle -u pastelle --password=13 -e 'SELECT `CHROM`,`START`,`END`,`ID`,`REF`,`ALT`,`FILTRE`,`AC`,`AF`,`AN`,`DP`,`Func.refGene_20170601`,`Gene.refGene_20170601`,`GeneDetail.refGene_20170601`,`ExonicFunc.refGene_20170601`,`AAChange.refGene_20170601`,`1000g2015all`,`1000g2015afr`,`1000g2015amr`,`1000g2015eur`,`1000g2015eas`,`1000g2015sas`,`ExcessHet`,`dbSNP`,`downsampled`,`ExAC_ALL`,`ExAC_AFR`,`ExAC_AMR`,`ExAC_EAS`,`ExAC_FIN`,`ExAC_NFE`,`ExAC_OTH`,`ExAC_SAS`,`ExAC_nontcga_ALL`,`ExAC_nontcga_AFR`,`ExAC_nontcga_AMR`,`ExAC_nontcga_EAS`,`ExAC_nontcga_FIN`,`ExAC_nontcga_NFE`,`ExAC_nontcga_OTH`,`ExAC_nontcga_SAS`,`WGS`,`WES`,`CNV` FROM CRO6502_HG19 limit 300' > selection_CRO6502_HG19.txt"
 				
 if __name__== '__main__':
 	start = time()
