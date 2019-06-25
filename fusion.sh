@@ -7,6 +7,12 @@ WGS_CNV=$3
 WES_SNP=$4
 WES_CNV=$5
 
+echo "Remove Id annotation" 
+cat $1 |awk -F "\t" '{print $1";"$2";"$4";"$5";"$6";"$7";"$8";"$9";"$10}'> WGS_un
+cat $2 |awk -F "\t" '{print $1";"$2";"$4";"$5";"$6";"$7";"$8";"$9";"$10}'> WGS_deux
+cat $3 |awk -F "\t" '{print $1";"$2";"$4";"$5";"$6";"$7";"$8";"$9";"$10}'> WGS_CNV
+cat $4 |awk -F "\t" '{print $1";"$2";"$4";"$5";"$6";"$7";"$8";"$9";"$10}'> WES_SNP
+cat $5 |awk -F "\t" '{print $1";"$2";"$4";"$5";"$6";"$7";"$8";"$9";"$10}'> WES_CNV
 
 echo "Fusion de WGS 1 et 2"
 #detection des mauvaise ligne
