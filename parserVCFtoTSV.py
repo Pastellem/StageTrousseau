@@ -28,7 +28,7 @@ ID = {"B00HXC7":"DCP951","B00HZ6T":"DCP925","B00HXC9":"DCP521",
 			"B00HZ6Q":"FMF3558","B00HXD8":"FMF3556","B00HXCW":"FMF3183",
 			"B00HXCX":"FMF3358","B00HXCY":"FMF3359","B00HXCZ":"FMF3360",
 			"B00HXD0":"FMF3361","B00HXD9":"FMF937","B00HXDA":"FMF3160"}
-Colname= ['CHROM','START','ID','END','REF','ALT','QUAL','FILTRE','AC','AF','AN','DP','WGS','WES',
+Colname= ['CHROM','START','END','REF','ALT','QUAL','FILTRE','AC','AF','AN','DP','GenRef','WGS','WES',
 'Func.refGene_20170601','Gene.refGene_20170601','GeneDetail.refGene_20170601',
 'ExonicFunc.refGene_20170601','AAChange.refGene_20170601',
 '1000g2015all','1000g2015afr','1000g2015amr','1000g2015eur','1000g2015eas',
@@ -100,6 +100,7 @@ def mariaDB(File,table,Colname):
 		#update {} set `Ti-Tv`=2 where select * from CRO6502 INNER JOIN GC ON CRO6502.START>=GC.chromStart or CRO6502.END<=GC.chromEnd or CRO6502.END>=GC.chromStart or CRO6502.END<=GC.chromEnd);
 	
 
+sys.stdout.write("]\n") # this ends the progress bar
 def readFile(FilePath):
 	""" Read file line by line and transfert to other function """
 	print("Read file..........Work in progress")
@@ -117,8 +118,8 @@ def readFile(FilePath):
 				extract = split("\s",line) #Create list from line
 				tsvLine=len(Colname)*["None"]
 				j=0
-				for i in range(8): #Complet de 7st first default columns 
-					if i==3:
+				for i in range(7): #Complet de 7st first default columns 
+					if i==2:
 						tsvLine[i]="-";
 						j-=1
 					else: 
@@ -156,6 +157,15 @@ def readFile(FilePath):
 								tsvLine[Colname.index("WGS")]=1
 							else:
 								tsvLine[Colname.index("WES")]=1
+						if info[0] == "GenRef":						
+							NGS = split("-",info[1])	
+							if NGS[0] == "HG19" and NGS[1]=="HG38":#Tag the WGS and WES statue
+								tsvLine[Colname.index("HG19")]=1
+								tsvLine[Colname.index("HG38")]=1
+							elif NGS[0] == "HG19" :
+								tsvLine[Colname.index("HG19")]=1
+							else:
+								tsvLine[Colname.index("HG38")]=1
 								
 					else:
 						if annotation == "DS": #downsampled special annotation in ANNOVAR
@@ -182,9 +192,9 @@ if __name__== '__main__':
 	print("Output file is writing")
 	ouputCSV(tsv,File_name)
 	output = File_name+".csv"
-	print("MySQL MariaDB")
-	mariaDB(output,File_name,Colname)
-	print("Creation fichier de selection")
-	extractor(File_name)
+	#print("MySQL MariaDB")
+	#mariaDB(output,File_name,Colname)
+	#print("Creation fichier de selection")
+	#extractor(File_name)
 	end = time()
 	print('time : {:.2f}s'.format((end - start)))
